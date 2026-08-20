@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BanglaTolly Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      padding: 20px 30px;
+      border-bottom: 2px solid #e94560;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 22px; color: #fff; }
+    header span { font-size: 12px; color: #888; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .badge-green { background: #1a4a2e; color: #4caf50; }
+    .badge-red { background: #4a1a1a; color: #f44336; }
+    .badge-yellow { background: #4a3a1a; color: #ffc107; }
+    .badge-blue { background: #1a2a4a; color: #2196f3; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-card .num { font-size: 36px; font-weight: bold; }
+    .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+    .num-green { color: #4caf50; }
+    .num-yellow { color: #ffc107; }
+    .num-red { color: #f44336; }
+    .num-blue { color: #2196f3; }
+
+    /* Run button */
+    .run-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #e94560, #c2185b);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: opacity 0.2s;
+    }
+    .run-btn:hover { opacity: 0.9; }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Status bar */
+    .status-bar {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #aaa;
+      min-height: 44px;
+    }
+    .status-bar.running { border-color: #ffc107; color: #ffc107; }
+    .status-bar.success { border-color: #4caf50; color: #4caf50; }
+    .status-bar.error { border-color: #f44336; color: #f44336; }
+
+    /* Section */
+    .section {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 14px 20px;
+      background: #16213e;
+      font-weight: bold;
+      font-size: 14px;
+      border-bottom: 1px solid #2a2a4a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Runs list */
+    .run-item {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1e1e3a;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .run-item:last-child { border-bottom: none; }
+    .run-item:hover { background: #1e1e3a; }
+    .run-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .run-time { font-size: 13px; color: #aaa; }
+    .run-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .run-logs {
+      display: none;
+      margin-top: 12px;
+      background: #0a0a14;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #aaa;
+      line-height: 1.8;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .run-logs.open { display: block; }
+
+    /* Published posts */
+    .post-item {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1e1e3a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .post-item:last-child { border-bottom: none; }
+    .post-item a {
+      color: #e94560;
+      text-decoration: none;
+      font-size: 11px;
+    }
+    .post-item a:hover { text-decoration: underline; }
+
+    /* Empty state */
+    .empty { padding: 30px; text-align: center; color: #555; font-size: 13px; }
+
+    /* Log colors */
+    .log-line { display: block; }
+    .log-ok { color: #4caf50; }
+    .log-err { color: #f44336; }
+    .log-warn { color: #ffc107; }
+    .log-info { color: #aaa; }
+
+    /* Refresh */
+    .refresh-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .refresh-btn {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      color: #aaa;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .refresh-btn:hover { border-color: #e94560; color: #e94560; }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .run-item-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 BanglaTolly Bot</h1>
+  <span id="last-refresh">Loading...</span>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="num num-blue" id="total-runs">—</div>
+      <div class="label">Total Runs</div>
+    </div>
+    <div class="stat-card">
+      <div class="num num-green" id="total-published">—</div>
+      <div class="label">Posts Published</div>
+    </div>
+    <div class="stat-card">
+      <div class="num num-yellow" id="total-skipped">—</div>
+      <div class="label">Duplicates Skipped</div>
+    </div>
+    <div class="stat-card">
+      <div class="num num-red" id="total-failed">—</div>
+      <div class="label">Failed</div>
+    </div>
+  </div>
+
+  <!-- Manual Trigger -->
+  <button class="run-btn" id="run-btn" onclick="triggerBot()">
+    ▶ Run Bot Now (Manual Trigger)
+  </button>
+
+  <!-- Status -->
+  <div class="status-bar" id="status-bar">Idle — click "Run Bot Now" to trigger manually</div>
+
+  <!-- Refresh -->
+  <div class="refresh-row">
+    <button class="refresh-btn" onclick="loadDashboard()">⟳ Refresh Dashboard</button>
+  </div>
+
+  <!-- Last 10 Runs -->
+  <div class="section">
+    <div class="section-header">📋 Last 10 Runs <span style="color:#555;font-weight:normal;font-size:12px">(click a run to see logs)</span></div>
+    <div id="runs-list"><div class="empty">Loading runs...</div></div>
+  </div>
+
+  <!-- Recently Published -->
+  <div class="section">
+    <div class="section-header">📰 Recently Published Posts</div>
+    <div id="posts-list"><div class="empty">Loading posts...</div></div>
+  </div>
+
+</div>
+
+<script>
+  const BASE = window.location.origin;
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString("en-IN", { timeZone: "Asia/Dhaka", hour12: true });
+  }
+
+  function colorLog(line) {
+    if (line.includes("✅") || line.includes("Published:")) return `<span class="log-line log-ok">${line}</span>`;
+    if (line.includes("❌") || line.includes("Error") || line.includes("Failed")) return `<span class="log-line log-err">${line}</span>`;
+    if (line.includes("⚠️") || line.includes("SKIP") || line.includes("NONE")) return `<span class="log-line log-warn">${line}</span>`;
+    return `<span class="log-line log-info">${line}</span>`;
+  }
+
+  function toggleLogs(id) {
+    const el = document.getElementById("logs-" + id);
+    el.classList.toggle("open");
+  }
+
+  async function loadDashboard() {
+    document.getElementById("last-refresh").textContent = "Refreshing...";
+    try {
+      const res = await fetch(`${BASE}/api/logs`);
+      const data = await res.json();
+      const runs = data.runs || [];
+
+      // Update stats
+      let totalPublished = 0, totalSkipped = 0, totalFailed = 0;
+      runs.forEach(r => {
+        totalPublished += r.stats?.published || 0;
+        totalSkipped += r.stats?.skipped || 0;
+        totalFailed += r.stats?.failed || 0;
+      });
+      document.getElementById("total-runs").textContent = runs.length;
+      document.getElementById("total-published").textContent = totalPublished;
+      document.getElementById("total-skipped").textContent = totalSkipped;
+      document.getElementById("total-failed").textContent = totalFailed;
+
+      // Runs list
+      const runsList = document.getElementById("runs-list");
+      if (runs.length === 0) {
+        runsList.innerHTML = `<div class="empty">No runs yet. Click "Run Bot Now" to start!</div>`;
+      } else {
+        runsList.innerHTML = runs.map((run, i) => {
+          const s = run.stats || {};
+          const logHtml = (run.logs || []).map(colorLog).join("\n");
+          return `
+            <div class="run-item" onclick="toggleLogs(${i})">
+              <div class="run-item-header">
+                <span class="run-time">🕐 ${formatTime(run.timestamp)} &nbsp;|&nbsp; ⏱ ${run.duration}</span>
+                <div class="run-stats">
+                  <span class="badge badge-blue">Found: ${s.found || 0}</span>
+                  <span class="badge badge-green">Published: ${s.published || 0}</span>
+                  <span class="badge badge-yellow">Skipped: ${s.skipped || 0}</span>
+                  ${s.failed > 0 ? `<span class="badge badge-red">Failed: ${s.failed}</span>` : ""}
+                </div>
+              </div>
+              <div id="logs-${i}" class="run-logs">${logHtml}</div>
+            </div>`;
+        }).join("");
+      }
+
+      // Published posts (collect from all runs)
+      const allPosts = [];
+      runs.forEach(run => {
+        (run.publishedPosts || []).forEach(p => allPosts.push({ ...p, time: run.timestamp }));
+      });
+
+      const postsList = document.getElementById("posts-list");
+      if (allPosts.length === 0) {
+        postsList.innerHTML = `<div class="empty">No posts published yet</div>`;
+      } else {
+        postsList.innerHTML = allPosts.map(p => `
+          <div class="post-item">
+            <span>${p.title}</span>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:11px;color:#555">${formatTime(p.time)}</span>
+              ${p.url ? `<a href="${p.url}" target="_blank">View Post →</a>` : ""}
+            </div>
+          </div>`).join("");
+      }
+
+      document.getElementById("last-refresh").textContent = `Last refresh: ${new Date().toLocaleTimeString()}`;
+    } catch (err) {
+      document.getElementById("last-refresh").textContent = "Refresh failed";
+    }
+  }
+
+  async function triggerBot() {
+    const btn = document.getElementById("run-btn");
+    const statusBar = document.getElementById("status-bar");
+
+    btn.disabled = true;
+    btn.textContent = "⏳ Running...";
+    statusBar.className = "status-bar running";
+    statusBar.textContent = "🔄 Bot is running... please wait (up to 60 seconds)";
+
+    const start = Date.now();
+    try {
+      const res = await fetch(`${BASE}/api/run`);
+      const data = await res.json();
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      const s = data.stats || {};
+
+      if (data.success) {
+        statusBar.className = "status-bar success";
+        statusBar.textContent = `✅ Done in ${elapsed}s — Published: ${s.published} | Skipped: ${s.skipped} | Failed: ${s.failed}`;
+      } else {
+        statusBar.className = "status-bar error";
+        statusBar.textContent = `❌ Error: ${data.error || "Unknown error"}`;
+      }
+
+      await loadDashboard();
+    } catch (err) {
+      statusBar.className = "status-bar error";
+      statusBar.textContent = `❌ Request failed: ${err.message}`;
+    }
+
+    btn.disabled = false;
+    btn.textContent = "▶ Run Bot Now (Manual Trigger)";
+  }
+
+  // Load on start
+  loadDashboard();
+  // Auto refresh every 5 minutes
+  setInterval(loadDashboard, 5 * 60 * 1000);
+</script>
+</body>
+</html>
